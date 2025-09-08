@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1019641069374",
+    "project_id": "bon-plan-d73c7",
+    "storage_bucket": "bon-plan-d73c7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019641069374:android:2cd05cc3e5054c5ab4b66f",
+        "android_client_info": {
+          "package_name": "com.example.flutter_mon_apply"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDoq42tJJSV4XSlKLorulzM-P6vDojn-f4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019641069374:android:41a89e7cbff7570fb4b66f",
+        "android_client_info": {
+          "package_name": "com.test1.monapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDoq42tJJSV4XSlKLorulzM-P6vDojn-f4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
