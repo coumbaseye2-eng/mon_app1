@@ -9,7 +9,6 @@ class SettingPage extends StatefulWidget {
 }
 
 class SettingPageState extends State<SettingPage> {
-  // ✅ Déclaration des variables d'état
   bool _notifEnabled = true;
   bool _darkMode = false;
   String _selectedLang = "Français";
@@ -23,7 +22,6 @@ class SettingPageState extends State<SettingPage> {
       ),
       body: ListView(
         children: [
-          // Profil utilisateur
           ListTile(
             leading: const Icon(Icons.person, color: Colors.green),
             title: const Text("Mon Compte"),
@@ -37,8 +35,6 @@ class SettingPageState extends State<SettingPage> {
                },
           ),
           const Divider(),
-
-          // Notifications
           SwitchListTile(
             secondary: const Icon(Icons.notifications, color: Colors.green),
             title: const Text("Notifications"),
