@@ -231,6 +231,11 @@ class _TachesPageState extends State<TachesPage> {
       appBar: AppBar(
         title: const Text("Mes Tâches"),
         backgroundColor: Colors.green,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: tasksRef.snapshots(),
