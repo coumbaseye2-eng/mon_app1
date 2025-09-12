@@ -11,7 +11,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
-    String displayName = user?.displayName ?? "Coumba";
+    String displayName = user?.displayName ?? "Moi";
     String email = user?.email ?? "email inconnu";
     String? photoURL = user?.photoURL;
 
