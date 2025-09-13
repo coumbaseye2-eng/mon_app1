@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'models/task.dart';
 
 class TachesPage extends StatefulWidget {
@@ -8,27 +9,16 @@ class TachesPage extends StatefulWidget {
   @override
   _TachesPageState createState() => _TachesPageState();
 }
-class CreateTask extends StatefulWidget {
-  const CreateTask({super.key});
-
-  @override
-  State<CreateTask> createState() => _CreateTaskState();
-}
-
-class _CreateTaskState extends State<CreateTask> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
 
 class _TachesPageState extends State<TachesPage> {
   final CollectionReference tasksRef =
   FirebaseFirestore.instance.collection("tasks");
-  late TextEditingController titreCtrl ;
-  late TextEditingController contenuCtrl ;
-  late String priorite ;
-  late DateTime date ;
+
+  late TextEditingController titreCtrl;
+  late TextEditingController contenuCtrl;
+  late String priorite;
+  late DateTime date;
+
   @override
   void initState() {
     titreCtrl = TextEditingController();
@@ -90,20 +80,28 @@ class _TachesPageState extends State<TachesPage> {
             TextButton(
               onPressed: () async {
                 if (titreCtrl.text.isNotEmpty) {
-                  final newTask = Task(
-                    titre: titreCtrl.text,
-                    contenu: contenuCtrl.text,
-                    date: date,
-                    priorite: priorite,
-                    couleur: priorite == "Élevée"
-                        ? Colors.blueAccent
-                        : priorite == "Moyenne"
-                        ? Colors.purple
-                        : Colors.green,
-                  );
+                  User? user = FirebaseAuth.instance.currentUser;
 
-                  await tasksRef.add(newTask.toMap());
-                  Navigator.pop(context);
+                  if (user != null) {
+                    final newTask = Task(
+                      titre: titreCtrl.text,
+                      contenu: contenuCtrl.text,
+                      date: date,
+                      priorite: priorite,
+                      couleur: priorite == "Élevée"
+                          ? Colors.blueAccent
+                          : priorite == "Moyenne"
+                          ? Colors.purple
+                          : Colors.green,
+                    );
+
+                    await tasksRef.add({
+                      ...newTask.toMap(),
+                      "userId": user.uid,
+                    });
+
+                    Navigator.pop(context);
+                  }
                 }
               },
               child: const Text("Ajouter"),
@@ -225,8 +223,11 @@ class _TachesPageState extends State<TachesPage> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
+    User? user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Mes Tâches"),
@@ -237,8 +238,12 @@ class _TachesPageState extends State<TachesPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: tasksRef.snapshots(),
+      body: user == null
+          ? const Center(child: Text("Veuillez vous connecter"))
+          : StreamBuilder<QuerySnapshot>(
+        stream: tasksRef
+            .where("userId", isEqualTo: user.uid)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
