@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mon_app1/compte_page.dart';
 
+
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
 
   @override
   State<SettingPage> createState() => SettingPageState();
 }
-
 class SettingPageState extends State<SettingPage> {
   bool _notifEnabled = true;
   bool _darkMode = false;
@@ -29,10 +29,10 @@ class SettingPageState extends State<SettingPage> {
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () {
               Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ComptePage()),
+                context,
+                MaterialPageRoute(builder: (context) => const ComptePage()),
               );
-               },
+            },
           ),
           const Divider(),
           SwitchListTile(
@@ -42,10 +42,10 @@ class SettingPageState extends State<SettingPage> {
             onChanged: (bool value) {
               setState(() {
                 _notifEnabled = value;
-              });
+              }
+              );
             },
           ),
-
           SwitchListTile(
             secondary: const Icon(Icons.dark_mode, color: Colors.green),
             title: const Text("Mode sombre"),
@@ -53,11 +53,9 @@ class SettingPageState extends State<SettingPage> {
             onChanged: (bool value) {
               setState(() {
                 _darkMode = value;
-              }
-              );
+              });
             },
           ),
-
           ListTile(
             leading: const Icon(Icons.language, color: Colors.green),
             title: const Text("Langue"),
@@ -78,7 +76,6 @@ class SettingPageState extends State<SettingPage> {
             ),
           ),
           const Divider(),
-
           ListTile(
             leading: const Icon(Icons.info, color: Colors.green),
             title: const Text("À propos"),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mon_app1/forgort_password_page.dart';
+import 'package:mon_app1/forgot_password_page.dart';
 import 'package:mon_app1/signup.dart';
 import 'package:mon_app1/profil_page.dart';
 
@@ -96,7 +96,6 @@ class _LoginPageState extends State<LoginPage> {
       ],
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(30.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,20 +124,20 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 50),
               buildTextField(
                 label: "Adresse Email",
                 controller: emailController,
                 icon: Icons.email,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               buildTextField(
                 label: "Mot de passe",
                 controller: passwordController,
                 icon: Icons.lock,
                 obscure: true,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(

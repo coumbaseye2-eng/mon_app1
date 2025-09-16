@@ -39,9 +39,14 @@ dependencies:
 
   shared_preferences: ^2.4.12
   cupertino_icons: ^1.0.8
-  firebase_core: ^4.0.0
-  firebase_auth: ^6.0.1
-  cloud_firestore: ^6.0.0
+  firebase_core: ^4.1.0
+  firebase_auth: ^6.0.2
+  cloud_firestore: ^6.0.1
+  firebase_storage: ^13.0.1
+  provider: ^6.1.5+1
+  image_picker: ^1.2.0
+
+
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +66,7 @@ flutter:
           - assets/img/arriere_plan.jpg
           - assets/img/OIP.jpg
           - assets/img/profil.jpg
+          - assets/img/profil1.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

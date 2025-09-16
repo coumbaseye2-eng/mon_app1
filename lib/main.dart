@@ -5,12 +5,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:mon_app1/profil_page.dart';
 import 'firebase_options.dart';
 
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
-
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -34,7 +35,6 @@ class AuthGate extends StatelessWidget {
 }
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -56,7 +56,6 @@ class MyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: Colors.grey,
         padding: const EdgeInsets.all(20),
         width: double.infinity,
         child: Column(
@@ -77,10 +76,10 @@ class MyHomePage extends StatelessWidget {
               'Bienvenue dans votre  gestionnaire de taches',
               style: TextStyle(fontSize: 30),
             ),
-            const SizedBox(height: 100),
+            const SizedBox(height: 90),
             SizedBox(
-              width: double.infinity,
-              height: 50,
+              width: 200,
+              height: 60,
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.push(

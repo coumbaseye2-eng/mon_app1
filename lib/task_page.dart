@@ -98,8 +98,8 @@ class _TachesPageState extends State<TachesPage> {
                     await tasksRef.add({
                       ...newTask.toMap(),
                       "userId": user.uid,
-                    });
-
+                    }
+                    );
                     Navigator.pop(context);
                   }
                 }
@@ -227,7 +227,6 @@ class _TachesPageState extends State<TachesPage> {
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Mes Tâches"),
@@ -253,8 +252,8 @@ class _TachesPageState extends State<TachesPage> {
           }
           final tasks = snapshot.data!.docs.map((doc) {
             return Task.fromMap(doc.id, doc.data() as Map<String, dynamic>);
-          }).toList();
-
+          }
+          ).toList();
           return ListView.builder(
             itemCount: tasks.length,
             itemBuilder: (context, index) {
