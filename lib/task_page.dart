@@ -10,9 +10,149 @@ class TachesPage extends StatefulWidget {
   _TachesPageState createState() => _TachesPageState();
 }
 
+// Widget stateful pour le modal de modification de tâche
+class _EditTaskDialog extends StatefulWidget {
+  final Task task;
+  final CollectionReference tasksRef;
+
+  const _EditTaskDialog({required this.task, required this.tasksRef});
+
+  @override
+  State<_EditTaskDialog> createState() => _EditTaskDialogState();
+}
+
+class _EditTaskDialogState extends State<_EditTaskDialog> {
+  late TextEditingController titreCtrl;
+  late TextEditingController contenuCtrl;
+  late String priorite;
+  late DateTime date;
+
+  @override
+  void initState() {
+    super.initState();
+    titreCtrl = TextEditingController(text: widget.task.titre);
+    contenuCtrl = TextEditingController(text: widget.task.contenu);
+    priorite = widget.task.priorite;
+    date = widget.task.date;
+  }
+
+  @override
+  void dispose() {
+    titreCtrl.dispose();
+    contenuCtrl.dispose();
+    super.dispose();
+  }
+
+  String get dateText {
+    return "${date.day}/${date.month}/${date.year}";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Modifier la tâche"),
+      content: SingleChildScrollView(
+        child: Column(
+          children: [
+            TextField(
+              controller: titreCtrl,
+              decoration: const InputDecoration(labelText: "Titre"),
+            ),
+            TextField(
+              controller: contenuCtrl,
+              decoration: const InputDecoration(labelText: "Contenu"),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Text("Priorité: "),
+                const SizedBox(width: 10),
+                DropdownButton<String>(
+                  value: priorite,
+                  items: ["Élevée", "Moyenne", "Basse"].map((String value) {
+                    return DropdownMenuItem(value: value, child: Text(value));
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      priorite = value!;
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Text("Date: "),
+                const SizedBox(width: 10),
+                Text(
+                  dateText,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () async {
+                DateTime? picked = await showDatePicker(
+                  context: context,
+                  initialDate: date,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2100),
+                );
+                if (picked != null) {
+                  setState(() {
+                    date = picked;
+                  });
+                }
+              },
+              child: const Text("Choisir une date"),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Annuler"),
+        ),
+        TextButton(
+          onPressed: () async {
+            if (titreCtrl.text.isNotEmpty) {
+              final updatedTask = Task(
+                id: widget.task.id,
+                titre: titreCtrl.text,
+                contenu: contenuCtrl.text,
+                date: date,
+                priorite: priorite,
+                couleur: priorite == "Élevée"
+                    ? Colors.blueAccent
+                    : priorite == "Moyenne"
+                    ? Colors.purple
+                    : Colors.green,
+                completer: widget.task.completer,
+              );
+
+              await widget.tasksRef
+                  .doc(widget.task.id)
+                  .update(updatedTask.toMap());
+              Navigator.pop(context);
+            }
+          },
+          child: const Text("Modifier"),
+        ),
+      ],
+    );
+  }
+}
+
 class _TachesPageState extends State<TachesPage> {
-  final CollectionReference tasksRef =
-  FirebaseFirestore.instance.collection("tasks");
+  final CollectionReference tasksRef = FirebaseFirestore.instance.collection(
+    "tasks",
+  );
 
   late TextEditingController titreCtrl;
   late TextEditingController contenuCtrl;
@@ -27,90 +167,20 @@ class _TachesPageState extends State<TachesPage> {
     date = DateTime.now();
     super.initState();
   }
+
   void _addTask() {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text("Nouvelle tâche"),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: titreCtrl,
-                  decoration: const InputDecoration(labelText: "Titre"),
-                ),
-                TextField(
-                  controller: contenuCtrl,
-                  decoration: const InputDecoration(labelText: "Contenu"),
-                ),
-                const SizedBox(height: 10),
-                DropdownButton<String>(
-                  value: priorite,
-                  items: ["Élevée", "Moyenne", "Basse"].map((String value) {
-                    return DropdownMenuItem(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      priorite = value!;
-                    });
-                  },
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: date,
-                      firstDate: DateTime(2024),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      date = picked;
-                    }
-                  },
-                  child: const Text("Choisir une date"),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                if (titreCtrl.text.isNotEmpty) {
-                  User? user = FirebaseAuth.instance.currentUser;
-
-                  if (user != null) {
-                    final newTask = Task(
-                      titre: titreCtrl.text,
-                      contenu: contenuCtrl.text,
-                      date: date,
-                      priorite: priorite,
-                      couleur: priorite == "Élevée"
-                          ? Colors.blueAccent
-                          : priorite == "Moyenne"
-                          ? Colors.purple
-                          : Colors.green,
-                    );
-
-                    await tasksRef.add({
-                      ...newTask.toMap(),
-                      "userId": user.uid,
-                    }
-                    );
-                    Navigator.pop(context);
-                  }
-                }
-              },
-              child: const Text("Ajouter"),
-            ),
-          ],
+        return _AddTaskDialog(
+          tasksRef: tasksRef,
+          initialPriority: priorite,
+          initialDate: date,
         );
       },
     );
   }
+
   Future<void> _removeTask(String id) async {
     bool confirm = await showDialog(
       context: context,
@@ -140,89 +210,14 @@ class _TachesPageState extends State<TachesPage> {
   }
 
   void _editTask(Task task) {
-    TextEditingController titreCtrl = TextEditingController(text: task.titre);
-    TextEditingController contenuCtrl =
-    TextEditingController(text: task.contenu);
-    String priorite = task.priorite;
-    DateTime date = task.date;
-
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text("Modifier la tâche"),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: titreCtrl,
-                  decoration: const InputDecoration(labelText: "Titre"),
-                ),
-                TextField(
-                  controller: contenuCtrl,
-                  decoration: const InputDecoration(labelText: "Contenu"),
-                ),
-                const SizedBox(height: 10),
-                DropdownButton<String>(
-                  value: priorite,
-                  items: ["Élevée", "Moyenne", "Basse"].map((String value) {
-                    return DropdownMenuItem(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      priorite = value!;
-                    });
-                  },
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: date,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      date = picked;
-                    }
-                  },
-                  child: const Text("Choisir une date"),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                if (titreCtrl.text.isNotEmpty) {
-                  final updatedTask = Task(
-                    id: task.id,
-                    titre: titreCtrl.text,
-                    contenu: contenuCtrl.text,
-                    date: date,
-                    priorite: priorite,
-                    couleur: priorite == "Élevée"
-                        ? Colors.blueAccent
-                        : priorite == "Moyenne"
-                        ? Colors.purple
-                        : Colors.green,
-                    completer: task.completer,
-                  );
-
-                  await tasksRef.doc(task.id).update(updatedTask.toMap());
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text("Modifier"),
-            ),
-          ],
-        );
+        return _EditTaskDialog(task: task, tasksRef: tasksRef);
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
@@ -239,20 +234,22 @@ class _TachesPageState extends State<TachesPage> {
       body: user == null
           ? const Center(child: Text("Veuillez vous connecter"))
           : StreamBuilder<QuerySnapshot>(
-        stream: tasksRef
-            .where("userId", isEqualTo: user.uid)
-            .snapshots(),
+        stream: tasksRef.where("userId", isEqualTo: user.uid).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("Aucune tâche pour le moment"));
+            return const Center(
+              child: Text("Aucune tâche pour le moment"),
+            );
           }
           final tasks = snapshot.data!.docs.map((doc) {
-            return Task.fromMap(doc.id, doc.data() as Map<String, dynamic>);
-          }
-          ).toList();
+            return Task.fromMap(
+              doc.id,
+              doc.data() as Map<String, dynamic>,
+            );
+          }).toList();
           return ListView.builder(
             itemCount: tasks.length,
             itemBuilder: (context, index) {
@@ -271,7 +268,8 @@ class _TachesPageState extends State<TachesPage> {
                     ),
                   ),
                   subtitle: Text(
-                      "${task.contenu}\nDate: ${task.date.toLocal()} \nPriorité: ${task.priorite}"),
+                    "${task.contenu}\nDate: ${task.date.toLocal()} \nPriorité: ${task.priorite}",
+                  ),
                   isThreeLine: true,
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -281,12 +279,17 @@ class _TachesPageState extends State<TachesPage> {
                           task.completer
                               ? Icons.check_circle
                               : Icons.radio_button_unchecked,
-                          color: task.completer ? Colors.green : Colors.black,
+                          color: task.completer
+                              ? Colors.green
+                              : Colors.black,
                         ),
                         onPressed: () => _toggleComplete(task),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                        icon: const Icon(
+                          Icons.edit,
+                          color: Colors.blueAccent,
+                        ),
                         onPressed: () => _editTask(task),
                       ),
                       IconButton(
@@ -307,4 +310,151 @@ class _TachesPageState extends State<TachesPage> {
       ),
     );
   }
+}
+
+// Widget stateful pour le modal d'ajout de tâche
+class _AddTaskDialog extends StatefulWidget {
+  final CollectionReference tasksRef;
+  final String initialPriority;
+  final DateTime initialDate;
+
+  const _AddTaskDialog({
+    required this.tasksRef,
+    required this.initialPriority,
+    required this.initialDate,
+  });
+
+  @override
+  State<_AddTaskDialog> createState() => _AddTaskDialogState();
+}
+
+class _AddTaskDialogState extends State<_AddTaskDialog> {
+  late TextEditingController titreCtrl;
+  late TextEditingController contenuCtrl;
+  late String priorite;
+  late DateTime date;
+
+  @override
+  void initState() {
+    super.initState();
+    titreCtrl = TextEditingController();
+    contenuCtrl = TextEditingController();
+    priorite = widget.initialPriority;
+    date = widget.initialDate;
+  }
+
+  @override
+  void dispose() {
+    titreCtrl.dispose();
+    contenuCtrl.dispose();
+    super.dispose();
+  }
+
+  String get dateText {
+    return "${date.day}/${date.month}/${date.year}";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+        title: const Text("Nouvelle tâche"),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: titreCtrl,
+                decoration: const InputDecoration(labelText: "Titre"),
+              ),
+              TextField(
+                controller: contenuCtrl,
+                decoration: const InputDecoration(labelText: "Contenu"),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Text("Priorité: "),
+                  const SizedBox(width: 10),
+                  DropdownButton<String>(
+                    value: priorite,
+                    items: ["Élevée", "Moyenne", "Basse"].map((String value) {
+                      return DropdownMenuItem(value: value, child: Text(value));
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        priorite = value!;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Text("Date: "),
+                  const SizedBox(width: 10),
+                  Text(
+                    dateText,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () async {
+                  DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: date,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      date = picked;
+                    });
+                  }
+                },
+                child: const Text("Choisir une date"),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+        TextButton(
+        onPressed: () => Navigator.pop(context),
+    child: const Text("Annuler"),
+    ),
+    TextButton(
+    onPressed: () async {
+    if (titreCtrl.text.isNotEmpty) {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+    final newTask = Task(
+    titre: titreCtrl.text,
+    contenu: contenuCtrl.text,
+    date: date,
+    priorite: priorite,
+    couleur: priorite == "Élevée"
+    ? Colors.blueAccent
+        : priorite == "Moyenne"
+    ? Colors.purple
+        : Colors.green,
+    );
+
+    await widget.tasksRef.add({
+    ...newTask.toMap(),
+    "userId": user.uid,
+    });
+    Navigator.pop(context);
+    }
+    }
+    },
+    child: const Text("Ajouter"),
+    ),
+    ],
+    );
+    }
 }
