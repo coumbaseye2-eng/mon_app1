@@ -9,8 +9,6 @@ class TachesPage extends StatefulWidget {
   @override
   _TachesPageState createState() => _TachesPageState();
 }
-
-// Widget stateful pour le modal de modification de tâche
 class _EditTaskDialog extends StatefulWidget {
   final Task task;
   final CollectionReference tasksRef;
@@ -311,8 +309,6 @@ class _TachesPageState extends State<TachesPage> {
     );
   }
 }
-
-// Widget stateful pour le modal d'ajout de tâche
 class _AddTaskDialog extends StatefulWidget {
   final CollectionReference tasksRef;
   final String initialPriority;
