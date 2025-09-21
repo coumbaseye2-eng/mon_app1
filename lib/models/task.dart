@@ -36,7 +36,7 @@ class Task {
       contenu: data["contenu"] ?? "",
       date: DateTime.parse(data["date"]),
       priorite: data["priorite"] ?? "Moyenne",
-      couleur: Color(data["couleur"] ?? Colors.grey),
+      couleur: Color(data["couleur"] ?? Colors.grey.value),
       completer: data["completer"] ?? false,
     );
   }

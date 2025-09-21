@@ -223,7 +223,6 @@ class _TachesPageState extends State<TachesPage> {
       },
     );
   }
-
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
