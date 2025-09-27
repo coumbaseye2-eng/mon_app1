@@ -116,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               const Center(
                 child: Text(
-                  "Authentification",
+                  "connexion",
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -167,7 +167,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                    "Connexion",
+                    "Se connecter",
                     style: TextStyle(color: Colors.white, fontSize: 20),
                   ),
                 ),
