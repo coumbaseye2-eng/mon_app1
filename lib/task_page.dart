@@ -40,11 +40,9 @@ class _EditTaskDialogState extends State<_EditTaskDialog> {
     contenuCtrl.dispose();
     super.dispose();
   }
-
   String get dateText {
     return "${date.day}/${date.month}/${date.year}";
   }
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -73,7 +71,8 @@ class _EditTaskDialogState extends State<_EditTaskDialog> {
                   onChanged: (value) {
                     setState(() {
                       priorite = value!;
-                    });
+                    }
+                    );
                   },
                 ),
               ],
@@ -104,7 +103,8 @@ class _EditTaskDialogState extends State<_EditTaskDialog> {
                 if (picked != null) {
                   setState(() {
                     date = picked;
-                  });
+                  }
+                  );
                 }
               },
               child: const Text("Choisir une date"),
@@ -127,10 +127,10 @@ class _EditTaskDialogState extends State<_EditTaskDialog> {
                 date: date,
                 priorite: priorite,
                 couleur: priorite == "Élevée"
-                    ? Colors.blueAccent
+                    ? Colors.indigoAccent
                     : priorite == "Moyenne"
-                    ? Colors.purple
-                    : Colors.green,
+                    ? Colors.white
+                    : Colors.cyanAccent,
                 completer: widget.task.completer,
               );
 
@@ -151,12 +151,10 @@ class _TachesPageState extends State<TachesPage> {
   final CollectionReference tasksRef = FirebaseFirestore.instance.collection(
     "tasks",
   );
-
   late TextEditingController titreCtrl;
   late TextEditingController contenuCtrl;
   late String priorite;
   late DateTime date;
-
   @override
   void initState() {
     titreCtrl = TextEditingController();
@@ -178,7 +176,6 @@ class _TachesPageState extends State<TachesPage> {
       },
     );
   }
-
   Future<void> _removeTask(String id) async {
     bool confirm = await showDialog(
       context: context,
@@ -206,7 +203,6 @@ class _TachesPageState extends State<TachesPage> {
   Future<void> _toggleComplete(Task task) async {
     await tasksRef.doc(task.id).update({"completer": !task.completer});
   }
-
   void _editTask(Task task) {
     showDialog(
       context: context,
@@ -215,21 +211,29 @@ class _TachesPageState extends State<TachesPage> {
       },
     );
   }
-
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text("Mes Tâches"),
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: user == null
+      body:Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF7966F5), Color(0xFFB870FD)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+      child: user == null
           ? const Center(child: Text("Veuillez vous connecter"))
           : StreamBuilder<QuerySnapshot>(
         stream: tasksRef.where("userId", isEqualTo: user.uid).snapshots(),
@@ -302,9 +306,10 @@ class _TachesPageState extends State<TachesPage> {
           );
         },
       ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addTask,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, size: 42),
       ),
     );
   }
@@ -318,8 +323,8 @@ class _AddTaskDialog extends StatefulWidget {
     required this.tasksRef,
     required this.initialPriority,
     required this.initialDate,
-  });
-
+  }
+  );
   @override
   State<_AddTaskDialog> createState() => _AddTaskDialogState();
 }
@@ -443,14 +448,15 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
     await widget.tasksRef.add({
     ...newTask.toMap(),
     "userId": user.uid,
-    });
+    }
+    );
     Navigator.pop(context);
     }
-    }
-    },
+     }
+      },
     child: const Text("Ajouter"),
-    ),
-    ],
+        ),
+        ],
     );
     }
 }

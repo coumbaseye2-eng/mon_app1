@@ -13,19 +13,35 @@ class ProfilePage extends StatefulWidget {
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
-
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   bool _isEditing = false;
   late TextEditingController _nameController;
   File? _imageFile;
+  File? _backgroundImage;
   final ImagePicker _picker = ImagePicker();
+
+  late final AnimationController _animationController;
+  late final Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
     final user = FirebaseAuth.instance.currentUser;
     _nameController = TextEditingController(text: user?.displayName ?? '');
+    _animationController =
+    AnimationController(vsync: this, duration: const Duration(seconds: 2))
+      ..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0, end: -10).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _nameController.dispose();
+    super.dispose();
   }
   Future<void> _updateDisplayName() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -40,9 +56,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() => _imageFile = File(pickedFile.path));
-    }
+    if (pickedFile != null) setState(() => _imageFile = File(pickedFile.path));
+  }
+  Future<void> _pickBackgroundImage(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) setState(() => _backgroundImage = File(pickedFile.path));
   }
   void _confirmAction({
     required String titre,
@@ -119,8 +137,85 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.image),
+              title: const Text('Changer le fond'),
+              onTap: () {
+                Navigator.pop(context);
+                _showBackgroundOptions();
+              },
+            ),
           ],
         ),
+      ),
+    );
+  }
+  void _showBackgroundOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text("Prendre une photo"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickBackgroundImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo),
+              title: const Text("Choisir depuis la galerie"),
+              onTap: () {
+                Navigator.pop(context);
+                _pickBackgroundImage(ImageSource.gallery);
+              },
+            ),
+            if (_backgroundImage != null)
+              ListTile(
+                leading: const Icon(Icons.delete_forever, color: Colors.red),
+                title: const Text("Supprimer le fond"),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _backgroundImage = null);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _buildStatCard({
+    required String title,
+    required int count,
+    required IconData icon,
+    required Color color,
+  }
+  )
+  {
+    return Container(
+      width: 140,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 30),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 40, color: Colors.white),
+          const SizedBox(height: 10),
+          Text(
+            "$count",
+            style: const TextStyle(
+                fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 5),
+          Text(title,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              textAlign: TextAlign.center),
+        ],
       ),
     );
   }
@@ -132,81 +227,147 @@ class _ProfilePageState extends State<ProfilePage> {
         body: Center(child: Text("Utilisateur non connecté")),
       );
     }
+    final double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      extendBody: true,
       appBar: AppBar(
-        title: const Text("Mon Profil"),
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Stack(
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 90),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundImage: _imageFile != null
-                          ? FileImage(_imageFile!)
-                          : (user.photoURL != null
-                          ? NetworkImage(user.photoURL!)
-                          : const AssetImage("assets/img/OIP.jpg"))
-                      as ImageProvider,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Material(
-                        color: Colors.white,
-                        shape: const CircleBorder(),
-                        child: PopupMenuButton<String>(
-                          icon: const Icon(Icons.edit, color: Colors.blueAccent),
-                          itemBuilder: (_) => [
-                            const PopupMenuItem(
-                              value: 'camera',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.camera_alt),
-                                  SizedBox(width: 8),
-                                  Text('Camera'),
-                                ],
+          Align(
+            alignment: Alignment.topCenter,
+            child: GestureDetector(
+              onTap: _showBackgroundOptions,
+              child: Container(
+                height: screenHeight * 0.43,
+                decoration: BoxDecoration(
+                  image: _backgroundImage != null
+                      ? DecorationImage(
+                    image: FileImage(_backgroundImage!),
+                    fit: BoxFit.cover,
+                  )
+                      : null,
+                  gradient: _backgroundImage == null
+                      ? const LinearGradient(
+                    colors: [Color(0xFF7966F5), Color(0xFFB870FD)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                      : null,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(100),
+                    bottomRight: Radius.circular(100),
+                  ),
+                ),
+                child: const Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Icon(Icons.edit, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.09,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF7966F5), Color(0xFFB870FD)],
+                    begin: Alignment.bottomLeft,
+                    end: Alignment.topRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(120),
+                    topRight: Radius.circular(120),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+              child: Column(
+                children: [
+                  Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundImage: _imageFile != null
+                            ? FileImage(_imageFile!)
+                            : (user.photoURL != null
+                            ? NetworkImage(user.photoURL!)
+                            : const AssetImage("assets/img/OIP.jpg"))
+                        as ImageProvider,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Material(
+                          color: Colors.white,
+                          shape: const CircleBorder(),
+                          child: PopupMenuButton<String>(
+                            icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                            itemBuilder: (_) => [
+                              const PopupMenuItem(
+                                value: 'camera',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.camera_alt),
+                                    SizedBox(width: 8),
+                                    Text('Camera'),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const PopupMenuItem(
-                              value: 'gallery',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.photo),
-                                  SizedBox(width: 8),
-                                  Text('Galerie'),
-                                ],
+                              const PopupMenuItem(
+                                value: 'gallery',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.photo),
+                                    SizedBox(width: 8),
+                                    Text('Galerie'),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                          onSelected: (value) {
-                            if (value == 'camera') _pickImage(ImageSource.camera);
-                            if (value == 'gallery') _pickImage(ImageSource.gallery);
-                          },
+                            ],
+                            onSelected: (value) {
+                              if (value == 'camera') _pickImage(ImageSource.camera);
+                              if (value == 'gallery') _pickImage(ImageSource.gallery);
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Row(
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  Row(
                     children: [
                       Expanded(
                         child: _isEditing
                             ? TextField(
                           controller: _nameController,
                           textAlign: TextAlign.center,
-                          decoration: const InputDecoration(
-                            labelText: "Nom d'utilisateur",
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: "Nom d'utilisateur",
+                            hintStyle: const TextStyle(color: Colors.white70),
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.2),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                         )
                             : Center(
@@ -214,12 +375,15 @@ class _ProfilePageState extends State<ProfilePage> {
                             user.displayName ?? "Utilisateur",
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                                fontSize: 26, fontWeight: FontWeight.bold),
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
                           ),
                         ),
                       ),
                       IconButton(
-                        icon: Icon(_isEditing ? Icons.check : Icons.edit),
+                        icon: Icon(_isEditing ? Icons.check : Icons.edit,
+                            color: Colors.white),
                         onPressed: () {
                           if (_isEditing) {
                             _updateDisplayName();
@@ -230,59 +394,69 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  user.email ?? "Email inconnu",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.blueAccent, fontSize: 18),
-                ),
-                const SizedBox(height: 70),
-                FutureBuilder<QuerySnapshot>(
-                  future: FirebaseFirestore.instance
-                      .collection('tasks')
-                      .where('userId', isEqualTo: user.uid)
-                      .where('completed', isEqualTo: true)
-                      .get(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const CircularProgressIndicator();
-                    }
-                    final completed = snapshot.data!.docs.length;
-                    return Container(
-                      padding: const EdgeInsets.all(20),
-                      margin: const EdgeInsets.symmetric(horizontal: 30),
-                      decoration: BoxDecoration(
-                        color: Colors.green[100],
-                        borderRadius: BorderRadius.circular(25),
+                  const SizedBox(height: 10),
+                  Text(
+                    user.email ?? "Email inconnu",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                  const SizedBox(height: 80),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FutureBuilder<QuerySnapshot>(
+                        future: FirebaseFirestore.instance
+                            .collection('tasks')
+                            .where('userId', isEqualTo: user.uid)
+                            .where('completed', isEqualTo: true)
+                            .get(),
+                        builder: (context, snapshot) {
+                          final completed = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                          return _buildStatCard(
+                            title: "Tâches complétées",
+                            count: completed,
+                            icon: Icons.check_circle,
+                            color: Colors.purple,
+                          );
+                        },
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.check_circle,
-                              size: 40, color: Colors.green),
-                          const SizedBox(width: 15),
-                          Text(
-                            "Tâches complétées: $completed",
-                            style: const TextStyle(
-                                fontSize: 22, fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      FutureBuilder<QuerySnapshot>(
+                        future: FirebaseFirestore.instance
+                            .collection('tasks')
+                            .where('userId', isEqualTo: user.uid)
+                            .where('completed', isEqualTo: false)
+                            .get(),
+                        builder: (context, snapshot) {
+                          final pending = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                          return _buildStatCard(
+                            title: "Tâches en cours",
+                            count: pending,
+                            icon: Icons.pending_actions,
+                            color: Colors.blue,
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 150),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 150),
+                ],
+              ),
             ),
           ),
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+          Positioned(
+            bottom: 80,
+            left: 16,
+            child: AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, _animation.value),
+                  child: child,
+                );
+              },
               child: FloatingActionButton.extended(
                 onPressed: _showAccountOptions,
-                backgroundColor: Colors.green[400],
+                backgroundColor: Colors.purple[400],
                 icon: const Icon(Icons.settings),
                 label: const Text("Options"),
               ),
@@ -290,36 +464,46 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person, color: Colors.purpleAccent),
-            label: "Profil",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list, color: Colors.purpleAccent),
-            label: "Tâches",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings, color: Colors.purpleAccent),
-            label: "Paramètres",
-          ),
-        ],
-        onTap: (index) {
-          setState(() => _currentIndex = index);
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const TachesPage()),
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingPage()),
-            );
-          }
-        },
+      bottomNavigationBar: Theme(
+        data: Theme.of(context).copyWith(
+          canvasColor: Colors.transparent,
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _currentIndex,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person,color: Colors.cyanAccent),
+              label: "Profil",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.list,color: Colors.cyanAccent),
+              label: "Tâches",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings,color: Colors.cyanAccent),
+              label: "Paramètres",
+            ),
+          ],
+          onTap: (index) {
+            setState(() => _currentIndex = index);
+            if (index == 1) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TachesPage()),
+              );
+            } else if (index == 2) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingPage()),
+              );
+            }
+          },
+        ),
       ),
     );
   }

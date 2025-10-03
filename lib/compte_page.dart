@@ -5,18 +5,16 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ComptePage extends StatefulWidget {
-  const ComptePage({super.key});
-
+  const ComptePage({super.key}
+      );
   @override
   State<ComptePage> createState() => _ComptePageState();
 }
-
 class _ComptePageState extends State<ComptePage> {
   final TextEditingController _controller = TextEditingController();
   User? _user;
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
-
   @override
   void initState() {
     super.initState();
@@ -29,7 +27,8 @@ class _ComptePageState extends State<ComptePage> {
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
-      });
+      }
+      );
       await _uploadAvatar();
     }
   }
@@ -40,7 +39,6 @@ class _ComptePageState extends State<ComptePage> {
           .ref()
           .child('avatars')
           .child('${_user!.uid}.png');
-
       await ref.putFile(_imageFile!);
       final photoURL = await ref.getDownloadURL();
 
@@ -51,7 +49,7 @@ class _ComptePageState extends State<ComptePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Avatar mis à jour avec succès !"),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.blueGrey,
         ),
       );
     } catch (e) {
@@ -71,12 +69,11 @@ class _ComptePageState extends State<ComptePage> {
       _user = FirebaseAuth.instance.currentUser;
       setState(() {
         _controller.text = _user?.displayName ?? '';
-      }
-      );
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Nom mis à jour : ${_user?.displayName}"),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.grey,
         ),
       );
     } catch (e) {
@@ -93,107 +90,149 @@ class _ComptePageState extends State<ComptePage> {
     final displayName = _user?.displayName ?? "Utilisateur";
     final photoURL = _user?.photoURL;
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text("Mon Compte"),
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundImage: _imageFile != null
-                      ? FileImage(_imageFile!) as ImageProvider
-                      : photoURL != null
-                      ? NetworkImage(photoURL)
-                      : const AssetImage("assets/img/profil1.png")
-                  as ImageProvider,
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Material(
-                    color: Colors.white,
-                    shape: const CircleBorder(),
-                    child: PopupMenuButton(
-                      icon: const Icon(Icons.edit, color: Colors.green),
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: 'camera',
-                          child: Row(
-                            children: const [
-                              Icon(Icons.camera_alt),
-                              SizedBox(width: 8),
-                              Text('Camera'),
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF7966F5),
+                         Color(0xFFB870FD)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+              child: Column(
+                children: [
+                  Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundImage: _imageFile != null
+                            ? FileImage(_imageFile!) as ImageProvider
+                            : photoURL != null
+                            ? NetworkImage(photoURL)
+                            : const AssetImage("assets/img/profil1.png")
+                        as ImageProvider,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Material(
+                          color: Colors.white,
+                          shape: const CircleBorder(),
+                          child: PopupMenuButton(
+                            icon: const Icon(Icons.edit, color: Colors.purple),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'camera',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.camera_alt),
+                                    SizedBox(width: 8),
+                                    Text('Camera'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'gallery',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.photo),
+                                    SizedBox(width: 8),
+                                    Text('Galerie'),
+                                  ],
+                                ),
+                              ),
                             ],
+                            onSelected: (value) {
+                              if (value == 'camera') {
+                                _pickImage(ImageSource.camera);
+                              }
+                              if (value == 'gallery') {
+                                _pickImage(ImageSource.gallery);
+                              }
+                            },
                           ),
                         ),
-                        PopupMenuItem(
-                          value: 'gallery',
-                          child: Row(
-                            children: const [
-                              Icon(Icons.photo),
-                              SizedBox(width: 8),
-                              Text('Galerie'),
-                            ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _controller,
+                          decoration: InputDecoration(
+                            labelText: "Nom d'utilisateur",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            prefixIcon:
+                            const Icon(Icons.person, color: Colors.purple),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        SizedBox(
+                          width: 200,
+                          height: 55,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.save, color: Colors.white),
+                            label: const Text(
+                              "Enregistrer",
+                              style: TextStyle(
+                                  color: Colors.white, fontSize: 18),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            onPressed: _saveUsername,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          "Nom actuel : $displayName",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
                         ),
                       ],
-                      onSelected: (value) {
-                        if (value == 'camera') _pickImage(ImageSource.camera);
-                        if (value == 'gallery') _pickImage(ImageSource.gallery);
-                      },
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-            TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                labelText: "Nom d'utilisateur",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: const Icon(Icons.person),
+                ],
               ),
             ),
-            const SizedBox(height: 50),
-            SizedBox(
-              width: 200,
-              height: 55,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.save),
-                label: const Text(
-                  "Enregistrer",
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                onPressed: _saveUsername,
-              ),
-            ),
-            const SizedBox(height: 50),
-            Text(
-              "Nom actuel : $displayName",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
